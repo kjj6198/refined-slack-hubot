@@ -1,31 +1,34 @@
-
 const scripts = [
   {
-    command: /¥!deploy (beta|alpha|release) ¥s+/,
+    name: 'dep2',
+    description: 'deploy line-fortune project to {alpha,beta,release}',
+    command: /\!deploy (beta|alpha|release) \s+/,
     isAuthedUser: () => {
       return true;
     },
-    action: (robot, match) => {
-
+    action: (robot, match) => {}
+  },
+  {
+    name: 'dep',
+    description: 'deploy line-fortune project to {alpha,beta,release}',
+    command: /\!deploy (beta|alpha|release) \s+/,
+    isAuthedUser: () => {
+      return true;
     },
+    action: (robot, match) => {}
   },
   {
     name: `review`,
-    description: `
-    Description: get pending PRs
-    Usage:
-    `,
+    description: `get pending PRs`,
     command: /review/,
-    isAuthedUser: (user) => {
+    isAuthedUser: user => {
       if (user.userId !== 'abc') {
         return false;
       }
 
       return true;
     },
-    action: () => {
-
-    }
+    action: () => {}
   }
 ];
 

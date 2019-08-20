@@ -1,26 +1,30 @@
+import MemoryStorage from './MemoryStorage';
 // 1. 把 hubot 弄好之後來用 heaven。-> Hubot 可以 publish 到 private npm 試試看。
 // 2. 建立 plugin 機制
 // 3. retry 機制
 
-
 type Command = {
-  name?: string,
+  name?: string;
   description?: string;
   command: RegExp | string;
   isAuthedUser: (user) => boolean;
   action: (match, robot) => void;
-}
+};
 
 class HubotScript {
   static readScripts() {
-    console.log('start loading scripts...');
-    const scripts: Array<Command> = require('../scripts');
+    let scripts: Array<Command> = MemoryStorage.get('scripts');
+
+    if (!scripts) {
+      scripts = require('../scripts');
+      MemoryStorage.set('scripts', scripts);
+    }
+
     return scripts;
   }
 }
 
 // loading scripts...
-
 
 // const scripts = [
 //   {
@@ -71,9 +75,8 @@ class HubotScript {
 //   }
 // }
 
-
 // export default (robot) => {
-  
+
 //   robot.hear();
 //   robot.hear();
 //   robot.hear();

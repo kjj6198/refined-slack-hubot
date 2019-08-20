@@ -1,46 +1,58 @@
 import htm from 'htm';
 
 function createLink(title: string, href: string) {
-  return `<${href}|${title}>`
+  return createText(`<${href}|${title}>`);
 }
 
 function createDivider() {
   return {
-    type: 'divider',
+    type: 'divider'
   };
 }
 
-function createContext(elements: Array<{
-  type: "mrkdwn" | "plain_text",
-  text: string,
-}>) {
+function createContext(
+  elements: Array<{
+    type: 'mrkdwn' | 'plain_text';
+    text: string;
+  }>
+) {
   return {
     type: 'context',
-    elements,
+    elements
   };
 }
 
 function createText(text) {
   return {
     type: 'mrkdwn',
-    text,
+    text
+  };
+}
+
+function createFields(fields) {
+  return {
+    type: 'section',
+    fields
   };
 }
 
 function createPlainText(text: string) {
   return {
-    type: 'plain_text',
-    text,
+    type: 'section',
+    text: {
+      type: 'mrkdwn',
+      text
+    }
   };
 }
 
-function createBlock(type, text: string, useMrkdwn?: boolean) {
+function createBlock(type: string, text: string, useMrkdwn?: boolean) {
   return {
     type,
     text: {
       type: useMrkdwn ? 'mrkdwn' : 'plain_text',
-      text,
-    },
+      text
+    }
   };
 }
 
@@ -50,23 +62,35 @@ function createImage(title: string, imageURL: string, alt: string = '') {
     title: {
       type: 'plain_text',
       text: title,
-      emoji: true,
+      emoji: true
     },
     image_url: imageURL,
-    alt_text: alt,
-  }
+    alt_text: alt
+  };
 }
 
 function mapMarkupToBlock(type, props, ...children) {
-  switch(type) {
+  if (typeof type === 'function') {
+    return type({
+      ...props,
+      children
+    });
+  }
+
+  switch (type) {
     case 'a':
       return createLink(children.join(''), props.href);
     case 'section':
-      return createBlock('section', children.join(''));
+      return createBlock(
+        'section',
+        children.join(''),
+        props && props.useMarkdown
+      );
     case 'p':
-      return createText(children.join(''));
     case 'text':
       return createPlainText(children.join(''));
+    case 't':
+      return createText(children.join(''));
     case 'img':
       return createImage(props.title, props.src, props.alt);
     case 'hr':
@@ -75,6 +99,8 @@ function mapMarkupToBlock(type, props, ...children) {
       return createContext(props);
     case 'strong':
       return createBlock('section', `*${children.join('')}*`, true);
+    case 'fields':
+      return createFields(props.fields);
     case 'i':
       return createBlock('section', `_${children.join('')}_`, true);
     default:
