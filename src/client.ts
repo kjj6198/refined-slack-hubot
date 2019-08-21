@@ -17,13 +17,13 @@ type SlackError = {
 };
 
 export type SlackMessage = {
-  rawMessage: RawSlackMessage,
-  type: string,
-  text: string,
-  channel: any,
-  user: any,
-  event_ts: string,
-  ts: string,
+  rawMessage: RawSlackMessage;
+  type: string;
+  text: string;
+  channel: any;
+  user: any;
+  event_ts: string;
+  ts: string;
 };
 
 export type RawSlackMessage = {
@@ -100,7 +100,7 @@ export default class SlackClient {
 
     this.apiClient = new WebClient(token);
     this.rtm = new RTMClient(token);
-    
+
     // logging!!
     this.rtm.on('message', this.handleMessage);
     this.rtm.on('error', (err: SlackError) => {
@@ -112,7 +112,6 @@ export default class SlackClient {
       console.log('Successfully connected from server')
     );
     this.rtm.once('disconnect', () => console.log('time to say goodbye!'));
-
   }
 
   setupMessageHandler(callback) {
@@ -122,14 +121,18 @@ export default class SlackClient {
   }
 
   async getPrivateChannelInfo(channelId: string): Promise<any> {
-    return this.apiClient.groups.info({
-      channel: channelId,
-    }).then(result => {
-      return result.channel;
-    })
-    .catch(err => {
-      console.log(`channel can not found, maybe I don\'t have permission. Error: ${err.message}`);
-    });
+    return this.apiClient.groups
+      .info({
+        channel: channelId
+      })
+      .then(result => {
+        return result.channel;
+      })
+      .catch(err => {
+        console.log(
+          `channel can not found, maybe I don\'t have permission. Error: ${err.message}`
+        );
+      });
   }
 
   async getChannelInfo(channelId: string): Promise<any> {
@@ -147,13 +150,16 @@ export default class SlackClient {
       })
       .catch(err => {
         if (err.code === 'slack_webapi_platform_error') {
-          if (!err.data.ok && err.data.error === 'method_not_supported_for_channel_type') {
+          if (
+            !err.data.ok &&
+            err.data.error === 'method_not_supported_for_channel_type'
+          ) {
             return this.getPrivateChannelInfo(channelId);
           }
         }
 
         return null;
-      })
+      });
   }
 
   async getUserInfo(userId: string): Promise<SlackUser> {

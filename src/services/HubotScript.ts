@@ -1,5 +1,9 @@
 import MemoryStorage from './MemoryStorage';
-import SlackClient, { SlackUser, SlackMessage, RawSlackMessage } from '../client';
+import SlackClient, {
+  SlackUser,
+  SlackMessage,
+  RawSlackMessage
+} from '../client';
 
 export type Command = {
   command: RegExp | string;
@@ -8,7 +12,11 @@ export type Command = {
   description?: string;
   enableChannels?: (message: RawSlackMessage, client: SlackClient) => boolean;
   author?: () => string;
-  isAuthedUser?: (userId: string, message: RawSlackMessage, client: SlackClient) => boolean;
+  isAuthedUser?: (
+    userId: string,
+    message: RawSlackMessage,
+    client: SlackClient
+  ) => boolean;
 };
 
 export default class HubotScript {
@@ -16,7 +24,7 @@ export default class HubotScript {
     let scripts: Array<Command> = MemoryStorage.get('scripts');
 
     if (!scripts) {
-      console.log('loading script from disk.')
+      console.log('loading scripts from `scripts` folder');
       scripts = require('../scripts');
       MemoryStorage.set('scripts', scripts);
     }
