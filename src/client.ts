@@ -125,11 +125,10 @@ export default class SlackClient {
     return this.apiClient.groups.info({
       channel: channelId,
     }).then(result => {
-      console.log(result);
       return result.channel;
     })
     .catch(err => {
-      console.log('channel can not found, maybe I don\'t have permission.');
+      console.log(`channel can not found, maybe I don\'t have permission. Error: ${err.message}`);
     });
   }
 

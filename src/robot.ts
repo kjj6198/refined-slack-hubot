@@ -1,4 +1,4 @@
-import SlackClient, { SlackMessage, RawSlackMessage } from './client';
+import SlackClient, { RawSlackMessage } from './client';
 import HubotScript from './services/HubotScript';
 
 const scripts = HubotScript.readScripts();
@@ -12,12 +12,12 @@ export default class Robot {
     scripts.forEach(script => {
       
       if (typeof script.isAuthedUser === 'function' && !script.isAuthedUser(message.user, message, client)) {
-        client.send(message.channel, 'You are not auth users.');
+        client.send(message.channel, '*ERROR:* You are not auth users.');
         return
       }
 
       if (typeof script.enableChannels === 'function' && !script.enableChannels(message, client))  {
-        client.send(message.channel, `${script.name || 'this'} command can only run in certain channels.`);
+        client.send(message.channel, `*ERROR:* ${script.name || 'this'} command can only run in certain channels.`);
         return;
       }
 
