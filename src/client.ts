@@ -2,10 +2,10 @@ import { RTMClient } from '@slack/rtm-api';
 import { WebClient } from '@slack/web-api';
 import MemoryStorage from './services/MemoryStorage';
 import HubotScript from './services/HubotScript';
+import Robot from './robot';
 import block from './services/SlackBlock';
 import Help from './components/Help';
-
-const MESSAGE_REGEX = /<([@#!])?([^>|]+)(?:\|([^>]+))?>/g;
+import flatten from './utils/flatten';
 
 type SlackError = {
   code: string;
@@ -16,7 +16,17 @@ type SlackError = {
   };
 };
 
-type RawSlackMessage = {
+export type SlackMessage = {
+  rawMessage: RawSlackMessage,
+  type: string,
+  text: string,
+  channel: any,
+  user: any,
+  event_ts: string,
+  ts: string,
+};
+
+export type RawSlackMessage = {
   client_msg_id: string;
   suppress_notification: boolean;
   type: string;
@@ -80,8 +90,9 @@ export default class SlackClient {
   private rtm: RTMClient;
   private apiClient: WebClient;
   private robot: Hubot;
+  private messageHandler: any;
 
-  constructor(slackToken?: string, robot?) {
+  constructor(slackToken?: string) {
     const token = process.env.HUBOT_SLACK_TOKEN || slackToken;
     if (!token) {
       throw Error('SlackClient requires `HUBOT_SLACK_TOKEN`');
@@ -89,7 +100,8 @@ export default class SlackClient {
 
     this.apiClient = new WebClient(token);
     this.rtm = new RTMClient(token);
-
+    
+    // logging!!
     this.rtm.on('message', this.handleMessage);
     this.rtm.on('error', (err: SlackError) => {
       // TODO: do logging
@@ -100,6 +112,25 @@ export default class SlackClient {
       console.log('Successfully connected from server')
     );
     this.rtm.once('disconnect', () => console.log('time to say goodbye!'));
+
+  }
+
+  setupMessageHandler(callback) {
+    this.messageHandler = null;
+    this.messageHandler = callback;
+    this.messageHandler = this.messageHandler.bind(this);
+  }
+
+  async getPrivateChannelInfo(channelId: string): Promise<any> {
+    return this.apiClient.groups.info({
+      channel: channelId,
+    }).then(result => {
+      console.log(result);
+      return result.channel;
+    })
+    .catch(err => {
+      console.log('channel can not found, maybe I don\'t have permission.');
+    });
   }
 
   async getChannelInfo(channelId: string): Promise<any> {
@@ -114,7 +145,16 @@ export default class SlackClient {
       })
       .then(result => {
         return result.channel;
-      });
+      })
+      .catch(err => {
+        if (err.code === 'slack_webapi_platform_error') {
+          if (!err.data.ok && err.data.error === 'method_not_supported_for_channel_type') {
+            return this.getPrivateChannelInfo(channelId);
+          }
+        }
+
+        return null;
+      })
   }
 
   async getUserInfo(userId: string): Promise<SlackUser> {
@@ -138,7 +178,7 @@ export default class SlackClient {
     return this.apiClient[group][action](params);
   }
 
-  async send(channel: string, text: string, blocks: any) {
+  async send(channel: string, text: string, blocks?: any) {
     if (!blocks) {
       return this.apiClient.chat
         .postMessage({
@@ -187,7 +227,7 @@ export default class SlackClient {
     }
   }
 
-  handleMessage = async (message: RawSlackMessage) => {
+  private handleMessage = async (message: RawSlackMessage) => {
     // ignore self sent message
     if (message.user === this.robot.id) {
       return;
@@ -195,38 +235,28 @@ export default class SlackClient {
 
     // TODO: what if user add script after robot is running?
     const scripts = HubotScript.readScripts();
-
-    if (message.text === `<@${this.robot.id}> help`) {
+    const trimedMessage = message.text.trim();
+    // @robot help
+    this.getChannelInfo(message.channel);
+    if (trimedMessage === `<@${this.robot.id}> help`) {
       const component = block`
+        <mention id="${message.user}" type="user" />
         <${Help} scripts=${scripts} />
-      `.flat();
+      `;
 
-      console.log(component);
-      this.send(message.channel, '', component);
+      this.send(message.channel, `<@${message.user}>`, flatten(component));
+      return;
     }
-    const user = await this.getUserInfo(message.user);
 
-    // if (message.user) {
-
-    //   const channel = await this.getChannelInfo(message.channel);
-
-    //   if (message.type === 'message') {
-
-    //     scripts.filter(s => {
-    //       if (typeof s.command === 'string') {
-    //         return message.text.indexOf(s.command) > -1
-    //       }
-
-    //       return s.command.test(message.text);
-    //     })
-    //     .forEach(s => {
-
-    //     });
-    //   }
-    // }
-
-    // grab all scripts from scripts folder or config file
+    // grab user and channel data.
+    try {
+      // only respond for mention
+      if (trimedMessage.indexOf(`<@${this.robot.id}>`) === 0) {
+        message.text = message.text.replace(`<@${this.robot.id}>`, '');
+        Robot.handleMessage(message, this);
+      }
+    } catch (err) {
+      console.log('can not handle message: %s', err.message);
+    }
   };
 }
-
-new SlackClient().start();

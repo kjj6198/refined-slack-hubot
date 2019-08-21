@@ -69,6 +69,17 @@ function createImage(title: string, imageURL: string, alt: string = '') {
   };
 }
 
+function createMention(id: string, type: string) {
+  switch (type) {
+    case 'channel':
+      return createPlainText(`<#${id}>`);
+    case 'user':
+      return createPlainText(`<@${id}>`);
+    default:
+      return createPlainText(`<@${id}>`);
+  }
+}
+
 function mapMarkupToBlock(type, props, ...children) {
   if (typeof type === 'function') {
     return type({
@@ -103,6 +114,8 @@ function mapMarkupToBlock(type, props, ...children) {
       return createFields(props.fields);
     case 'i':
       return createBlock('section', `_${children.join('')}_`, true);
+    case 'mention':
+      return createMention(props.id, props.type);
     default:
       return createBlock('section', children.join(''), false);
   }
