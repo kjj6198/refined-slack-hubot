@@ -27,13 +27,10 @@ export type SlackMessage = {
 };
 
 export type RawSlackMessage = {
-  client_msg_id: string;
-  suppress_notification: boolean;
   type: string;
   text: string;
   user: string;
   team: string;
-  user_team: string;
   channel: string;
   event_ts: string;
   ts: string;
@@ -149,7 +146,7 @@ export default class SlackClient {
   private robot: Hubot;
 
   constructor(slackToken?: string) {
-    const token = process.env.HUBOT_SLACK_TOKEN || slackToken;
+    const token = slackToken;
     if (!token) {
       throw Error('SlackClient requires `HUBOT_SLACK_TOKEN`');
     }
@@ -162,6 +159,8 @@ export default class SlackClient {
     this.rtm.on('error', (err: SlackError) => {
       // TODO: do logging
     });
+
+    this.rtm.on('message.im', this.handleMessage);
 
     this.rtm.on('error', console.error);
     this.rtm.once('hello', () =>
@@ -287,17 +286,19 @@ export default class SlackClient {
     }
   }
 
-  private handleMessage = async (message: RawSlackMessage) => {
+  private handleMessage = async (message: RawSlackMessage): Promise<boolean> => {
     // ignore self sent message
     if (message.user === this.robot.id) {
-      return;
+      return false;
     }
 
     // TODO: what if user add script after robot is running?
     const scripts = HubotScript.readScripts();
     const trimedMessage = message.text.trim();
+    
     // @robot help
-    this.getChannelInfo(message.channel);
+    // maybe put it in other place?
+    // Hubot.handleMessage can be a good place to do that
     if (trimedMessage === `<@${this.robot.id}> help`) {
       const component = block`
         <mention id="${message.user}" type="user" />
@@ -305,11 +306,15 @@ export default class SlackClient {
       `;
 
       this.send(message.channel, `<@${message.user}>`, flatten(component));
-      return;
+      return true;
     }
 
     // grab user and channel data.
+    // we might want to send to slack if error occurs.
+    // just leave to user currently.
     try {
+      // const channel = this.getChannelInfo(message.channel);
+      // const user = this.getUserInfo(message.user);
       // only respond for mention
       if (trimedMessage.indexOf(`<@${this.robot.id}>`) === 0) {
         message.text = message.text.replace(`<@${this.robot.id}>`, '');

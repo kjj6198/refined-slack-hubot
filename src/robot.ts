@@ -2,9 +2,10 @@ import SlackClient, { RawSlackMessage } from './client';
 import HubotScript from './services/HubotScript';
 
 const scripts = HubotScript.readScripts();
+
 export default class Robot {  
   static run() {
-    const client = new SlackClient();
+    const client = new SlackClient(process.env.HUBOT_SLACK_TOKEN);
     client.start();
   }
 

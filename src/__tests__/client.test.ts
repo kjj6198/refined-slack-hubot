@@ -1,5 +1,6 @@
 import SlackClient from '../client';
 import { slackChannelResponse, slackUserReponse } from '../data/SlackResponse';
+import { rawSlackMessage } from '../data/SlackMessage';
 
 describe('SlackClient', () => {
   let client;
@@ -117,14 +118,46 @@ describe('SlackClient', () => {
     expect((client as any).rtm.removeAllListeners).toHaveBeenCalled();
   });
 
-  it('start connecting rtm client', () => {
-    (client as any).rtm.start.mockReturnValue(() =>
+  it('start connecting rtm client', async () => {
+    (client as any).rtm.start.mockReturnValue(
       Promise.resolve({
         ok: true,
         self: {}
       })
     );
-    client.start();
+
+    await client.start();
     expect((client as any).rtm.start).toHaveBeenCalled();
   });
 });
+
+describe('client#handleMessage', () => {
+  let client;
+  beforeEach(() => {
+    client = new SlackClient('xxx-xxxxx-xxxx');
+  });
+
+
+  it('should not respond message from bot self', async () => {
+    (client as any).robot = {
+      id: 'self',
+      name: 'self',
+    };
+    rawSlackMessage.user = 'self';
+    const result = await (client as any).handleMessage(rawSlackMessage);
+
+    expect(result).toBe(false);
+  });
+
+  it.skip('should replace message if mention robot', async () => {
+    (client as any).robot = {
+      id: 'self',
+      name: 'self',
+    };
+    rawSlackMessage.text = `<@self> deploy alpha project`;
+    await (client as any).handleMessage(rawSlackMessage);
+
+    expect(rawSlackMessage.text).toBe('deploy alpha project');
+  });
+});
+
