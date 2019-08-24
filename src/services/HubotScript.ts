@@ -1,14 +1,10 @@
 import MemoryStorage from './MemoryStorage';
-import SlackClient, {
-  SlackUser,
-  SlackMessage,
-  RawSlackMessage
-} from '../client';
+import SlackClient, { RawSlackMessage } from '../client';
 
 export type Command = {
   command: RegExp | string;
   action: (match, message: RawSlackMessage, client: SlackClient) => void;
-  name?: string;
+  name: string;
   description?: string;
   enableChannels?: (message: RawSlackMessage, client: SlackClient) => boolean;
   author?: () => string;
@@ -19,13 +15,29 @@ export type Command = {
   ) => boolean;
 };
 
+function checkIfDuplicatedScripts(scripts: Array<Command>) {
+  const scriptNames: {
+    [name: string]: boolean;
+  } = {};
+
+  scripts.forEach(script => {
+    if (scriptNames[script.name]) {
+      throw Error(`there is already a script called ${script.name}`);
+    }
+
+    scriptNames[script.name] = true;
+  });
+}
+
 export default class HubotScript {
-  static readScripts() {
+  static readScripts(
+    loader: () => Array<Command> = () => require('../scripts')
+  ) {
     let scripts: Array<Command> = MemoryStorage.get('scripts');
 
     if (!scripts) {
-      console.log('loading scripts from `scripts` folder');
-      scripts = require('../scripts');
+      scripts = loader();
+      checkIfDuplicatedScripts(scripts);
       MemoryStorage.set('scripts', scripts);
     }
 

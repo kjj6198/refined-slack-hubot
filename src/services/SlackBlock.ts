@@ -1,7 +1,7 @@
 import htm from 'htm';
 
 function createLink(title: string, href: string) {
-  return createText(`<${href}|${title}>`);
+  return `<${href}|${title}>`;
 }
 
 function createDivider() {
@@ -72,11 +72,11 @@ function createImage(title: string, imageURL: string, alt: string = '') {
 function createMention(id: string, type: string) {
   switch (type) {
     case 'channel':
-      return createPlainText(`<#${id}>`);
+      return `<#${id}>`;
     case 'user':
-      return createPlainText(`<@${id}>`);
+      return `<@${id}>`;
     default:
-      return createPlainText(`<@${id}>`);
+      return `<@${id}>`;
   }
 }
 
@@ -109,11 +109,11 @@ function mapMarkupToBlock(type, props, ...children) {
     case 'context':
       return createContext(props);
     case 'strong':
-      return createBlock('section', `*${children.join('')}*`, true);
+      return `*${children.join('')}*`;
     case 'fields':
       return createFields(props.fields);
     case 'i':
-      return createBlock('section', `_${children.join('')}_`, true);
+      return `_${children.join('')}_`;
     case 'mention':
       return createMention(props.id, props.type);
     default:

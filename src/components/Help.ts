@@ -14,7 +14,7 @@ const Help = ({ scripts }) => {
   );
 
   return block`
-    <strong>COMMAND: </strong>
+    <p><strong>COMMAND: </strong></p>
     ${alignedCommands}
   `;
 };

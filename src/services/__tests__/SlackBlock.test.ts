@@ -3,11 +3,7 @@ import block from '../SlackBlock';
 describe('SlackBlock#block``', () => {
   it('<a> tag', () => {
     const render = block`<a href="https://www.shurado.com">hello</a>`;
-    const expected = {
-      type: 'mrkdwn',
-      text: '<https://www.shurado.com|hello>'
-    };
-    expect(render).toEqual(expected);
+    expect(render).toEqual('<https://www.shurado.com|hello>');
   });
 
   it('<section/>', () => {
@@ -123,23 +119,11 @@ describe('SlackBlock#block``', () => {
   });
 
   it('<strong />', () => {
-    expect(block`<strong>text</strong>`).toEqual({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: '*text*'
-      }
-    });
+    expect(block`<strong>text</strong>`).toEqual('*text*');
   });
 
   it('<i>', () => {
-    expect(block`<i>eee</i>`).toEqual({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: '_eee_'
-      }
-    });
+    expect(block`<i>eee</i>`).toEqual('_eee_');
   });
 
   it('<fields>', () => {
@@ -151,6 +135,53 @@ describe('SlackBlock#block``', () => {
     `).toEqual({
       type: 'section',
       fields: [{ text: '1', type: 'mrkdwn' }, { text: '2', type: 'mrkdwn' }]
+    });
+  });
+
+  it('can compose component', () => {
+    const component = block`
+      <p>hello world</p>
+      <text>are you ok</text>
+      <img src="http://www.img.com" alt="test" title="hello" />
+      <p><strong>hello</strong> world</p>
+    `;
+
+    expect(component).toStrictEqual([
+      { text: { text: 'hello world', type: 'mrkdwn' }, type: 'section' },
+      { text: { text: 'are you ok', type: 'mrkdwn' }, type: 'section' },
+      {
+        alt_text: 'test',
+        image_url: 'http://www.img.com',
+        title: { emoji: true, text: 'hello', type: 'plain_text' },
+        type: 'image'
+      },
+      { text: { text: '*hello* world', type: 'mrkdwn' }, type: 'section' }
+    ]);
+  });
+
+  it('can compose user mention', () => {
+    const component = block`
+      <p>
+        <mention id="myid" type="user" /> please go to hell
+      </p>
+    `;
+
+    expect(component).toEqual({
+      text: { text: '<@myid> please go to hell', type: 'mrkdwn' },
+      type: 'section'
+    });
+  });
+
+  it('can compose channel mention', () => {
+    const component = block`
+      <p>
+        <mention id="general" type="channel" /> please go to hell
+      </p>
+    `;
+
+    expect(component).toEqual({
+      text: { text: '<#general> please go to hell', type: 'mrkdwn' },
+      type: 'section'
     });
   });
 });

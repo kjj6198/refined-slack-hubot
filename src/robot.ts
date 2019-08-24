@@ -8,8 +8,8 @@ export default class Robot {
 
   static run() {
     const client = new SlackClient(process.env.HUBOT_SLACK_TOKEN);
-    client.start();
     Robot.client = client;
+    client.start();
   }
 
   static handleScript(message: RawSlackMessage, script: Command) {

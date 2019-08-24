@@ -286,7 +286,9 @@ export default class SlackClient {
     }
   }
 
-  private handleMessage = async (message: RawSlackMessage): Promise<boolean> => {
+  private handleMessage = async (
+    message: RawSlackMessage
+  ): Promise<boolean> => {
     // ignore self sent message
     if (message.user === this.robot.id) {
       return false;
@@ -295,13 +297,13 @@ export default class SlackClient {
     // TODO: what if user add script after robot is running?
     const scripts = HubotScript.readScripts();
     const trimedMessage = message.text.trim();
-    
+
     // @robot help
     // maybe put it in other place?
     // Hubot.handleMessage can be a good place to do that
     if (trimedMessage === `<@${this.robot.id}> help`) {
       const component = block`
-        <mention id="${message.user}" type="user" />
+        <p><mention id="${message.user}" type="user" /></p>
         <${Help} scripts=${scripts} />
       `;
 
