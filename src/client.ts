@@ -318,7 +318,7 @@ export default class SlackClient {
       // only respond for mention
       if (trimedMessage.indexOf(`<@${this.robot.id}>`) === 0) {
         message.text = message.text.replace(`<@${this.robot.id}>`, '');
-        Robot.handleMessage(message, this);
+        Robot.handleMessage(message);
       }
     } catch (err) {
       console.log('can not handle message: %s', err.message);

@@ -100,7 +100,7 @@ describe('SlackClient', () => {
       postMessage: jest.fn().mockReturnValue(Promise.reject(expected))
     };
     const spy = jest.spyOn(console, 'log');
-    const result = await client.send('#a', 'b');
+    await client.send('#a', 'b');
 
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
@@ -137,11 +137,10 @@ describe('client#handleMessage', () => {
     client = new SlackClient('xxx-xxxxx-xxxx');
   });
 
-
   it('should not respond message from bot self', async () => {
     (client as any).robot = {
       id: 'self',
-      name: 'self',
+      name: 'self'
     };
     rawSlackMessage.user = 'self';
     const result = await (client as any).handleMessage(rawSlackMessage);
@@ -152,7 +151,7 @@ describe('client#handleMessage', () => {
   it.skip('should replace message if mention robot', async () => {
     (client as any).robot = {
       id: 'self',
-      name: 'self',
+      name: 'self'
     };
     rawSlackMessage.text = `<@self> deploy alpha project`;
     await (client as any).handleMessage(rawSlackMessage);
@@ -160,4 +159,3 @@ describe('client#handleMessage', () => {
     expect(rawSlackMessage.text).toBe('deploy alpha project');
   });
 });
-
