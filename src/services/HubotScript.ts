@@ -31,7 +31,7 @@ function checkIfDuplicatedScripts(scripts: Array<Command>) {
 
 export default class HubotScript {
   static readScripts(
-    loader: () => Array<Command> = () => require('../scripts')
+    loader: () => Array<Command> = () => require('../scripts').default
   ) {
     let scripts: Array<Command> = MemoryStorage.get('scripts');
 

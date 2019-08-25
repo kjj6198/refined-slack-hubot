@@ -23,6 +23,7 @@ describe('Robot', () => {
     };
 
     Robot.run();
+    rawSlackMessage.text = 'test';
     Robot.handleScript(rawSlackMessage, script);
     expect(Robot.client.send).toHaveBeenCalledWith(
       rawSlackMessage.channel,

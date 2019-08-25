@@ -3,6 +3,34 @@ import HubotScript, { Command } from './services/HubotScript';
 
 const scripts = HubotScript.readScripts();
 
+function preProcessMessage(
+  script: Command,
+  message: RawSlackMessage,
+  client: SlackClient
+) {
+  if (
+    typeof script.isAuthedUser === 'function' &&
+    !script.isAuthedUser(message.user, message, client)
+  ) {
+    client.send(message.channel, '*ERROR:* You are not authed users.');
+    return false;
+  }
+
+  if (
+    typeof script.enableChannels === 'function' &&
+    !script.enableChannels(message, client)
+  ) {
+    client.send(
+      message.channel,
+      `*ERROR:* ${script.name ||
+        'this'} command can only run in certain channels.`
+    );
+    return false;
+  }
+
+  return true;
+}
+
 export default class Robot {
   static client: SlackClient;
 
@@ -13,28 +41,11 @@ export default class Robot {
   }
 
   static handleScript(message: RawSlackMessage, script: Command) {
-    if (
-      typeof script.isAuthedUser === 'function' &&
-      !script.isAuthedUser(message.user, message, Robot.client)
-    ) {
-      Robot.client.send(message.channel, '*ERROR:* You are not authed users.');
-      return;
-    }
-
-    if (
-      typeof script.enableChannels === 'function' &&
-      !script.enableChannels(message, Robot.client)
-    ) {
-      Robot.client.send(
-        message.channel,
-        `*ERROR:* ${script.name ||
-          'this'} command can only run in certain channels.`
-      );
-      return;
-    }
-
     if (typeof script.command === 'string') {
-      if (message.text.includes(script.command)) {
+      if (
+        message.text.includes(script.command) &&
+        preProcessMessage(script, message, Robot.client)
+      ) {
         script.action(script.command, message, Robot.client);
       }
       return;
@@ -42,7 +53,7 @@ export default class Robot {
 
     if (script.command instanceof RegExp) {
       const matches = message.text.match(script.command);
-      if (matches) {
+      if (matches && preProcessMessage(script, message, Robot.client)) {
         script.action(matches, message, Robot.client);
       }
     }

@@ -10,12 +10,14 @@ function createDivider() {
   };
 }
 
-function createContext(
+function createContext({
+  elements
+}: {
   elements: Array<{
     type: 'mrkdwn' | 'plain_text';
     text: string;
-  }>
-) {
+  }>;
+}) {
   return {
     type: 'context',
     elements
@@ -104,10 +106,13 @@ function mapMarkupToBlock(type, props, ...children) {
       return createText(children.join(''));
     case 'img':
       return createImage(props.title, props.src, props.alt);
+    case 'br':
+      return '\n';
     case 'hr':
       return createDivider();
     case 'context':
       return createContext(props);
+    case 'b':
     case 'strong':
       return `*${children.join('')}*`;
     case 'fields':
