@@ -37,8 +37,8 @@ const search: Command = {
         `
         ]} />
       `;
-      console.log(first, component);
-      client.send(message.channel, 'result:', component);
+
+      client.send(message.channel, 'result:', component, message.ts);
     }
   }
 };

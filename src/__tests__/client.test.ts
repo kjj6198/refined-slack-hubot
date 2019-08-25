@@ -106,6 +106,10 @@ describe('SlackClient', () => {
     spy.mockRestore();
   });
 
+  it.skip('should reply to thread if ts was provided', () => {});
+
+  it.skip("can reply if user's message is in thread", () => {});
+
   it('can add custom event type to rtm client', () => {
     const noop = () => '';
     client.on('message', noop);

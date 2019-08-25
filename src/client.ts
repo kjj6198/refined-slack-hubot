@@ -238,24 +238,28 @@ export default class SlackClient {
   }
 
   // TODO: maybe add more params
-  async send(channel: string, text: string, blocks?: any) {
+  async send(channel: string, text: string, blocks?: any, ts?: string) {
+    const baseOptions = {
+      as_user: true,
+      channel,
+      text
+    };
+
     if (!blocks) {
       return this.apiClient.chat
         .postMessage({
-          as_user: true,
-          text: text,
-          channel
+          ...baseOptions,
+          thread_ts: ts
         })
         .catch(catchError);
     }
 
     return this.apiClient.chat
       .postMessage({
-        as_user: true,
-        channel,
-        text,
+        ...baseOptions,
         blocks,
-        mrkdwn: true
+        mrkdwn: true,
+        thread_ts: ts
       })
       .catch(catchError);
   }
@@ -291,6 +295,10 @@ export default class SlackClient {
   ): Promise<boolean> => {
     // ignore self sent message
     if (message.user === this.robot.id) {
+      return false;
+    }
+
+    if (!message.text) {
       return false;
     }
 
