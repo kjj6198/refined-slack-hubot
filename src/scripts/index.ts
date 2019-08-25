@@ -1,3 +1,4 @@
 import scripts from './deploy';
+import dict from './dict';
 
-export default [...scripts];
+export default [...scripts, ...dict];
