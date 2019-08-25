@@ -17,7 +17,8 @@ const memebers = [
 
 const deploy: Command = {
   name: 'deploy',
-  description: 'deploy line-fortune frontend related projects to alpha, beta',
+  description:
+    'deploy github projects to alpha, beta by github deployment event',
   isAuthedUser: userId => userId === 'UF1964VDJ',
   command: /deploy (alpha|beta) ([^ ]+) ([^ ]+)/,
   action: async (matches, message, client) => {
