@@ -4,7 +4,7 @@ require('dotenv').config();
 const octokit = new Octokit({
   auth: process.env.GITHUB_ACCESS_TOKEN,
   userAgent: 'bot hubot',
-  baseUrl: process.env.GITHUB_API_BASE_URL || 'https://api.github.com'
+  baseUrl: process.env.GITHUB_API_BASE_URL || 'https://api.github.com',
 });
 
 export async function getOpenedPullRequests(owner, repo) {
@@ -12,7 +12,7 @@ export async function getOpenedPullRequests(owner, repo) {
     owner,
     repo,
     state: 'open',
-    sort: 'created'
+    sort: 'created',
   });
 
   return pullRequests;
@@ -25,7 +25,7 @@ export async function createDeployment({
   ref,
   environment = 'alpha',
   description = 'deployment event triggered by hubot',
-  payload
+  payload,
 }) {
   const { data: deployment } = await octokit.repos.createDeployment({
     owner,
@@ -34,7 +34,7 @@ export async function createDeployment({
     auto_merge: false,
     payload,
     environment,
-    description
+    description,
   });
 
   return deployment;

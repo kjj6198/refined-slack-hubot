@@ -2,6 +2,9 @@ import SlackClient from '../client';
 import { slackChannelResponse, slackUserReponse } from '../data/SlackResponse';
 import { rawSlackMessage } from '../data/SlackMessage';
 
+jest.mock('../robot');
+import Robot from '../robot';
+
 describe('SlackClient', () => {
   let client;
   beforeEach(() => {
@@ -106,7 +109,23 @@ describe('SlackClient', () => {
     spy.mockRestore();
   });
 
-  it.skip('should reply to thread if ts was provided', () => {});
+  it('should reply to thread if ts was provided', () => {
+    client.apiClient.chat = {
+      postMessage: jest.fn().mockReturnValue(Promise.resolve('any'))
+    };
+
+    client.send(rawSlackMessage.channel, rawSlackMessage.text, [], '20190827');
+
+    expect(client.apiClient.chat.postMessage.mock.calls[0][0]).toEqual({
+      as_user: true,
+      blocks: [],
+      channel: rawSlackMessage.channel,
+      link_names: true,
+      mrkdwn: true,
+      text: rawSlackMessage.text,
+      thread_ts: '20190827'
+    });
+  });
 
   it.skip("can reply if user's message is in thread", () => {});
 
@@ -139,6 +158,15 @@ describe('client#handleMessage', () => {
   let client;
   beforeEach(() => {
     client = new SlackClient('xxx-xxxxx-xxxx');
+    client.apiClient.chat = {
+      postMessage: jest.fn().mockReturnValue(Promise.resolve(''))
+    };
+  });
+
+  afterEach(() => {
+    if (client.apiClient.chat) {
+      client.apiClient.chat.postMessage.mockRestore();
+    }
   });
 
   it('should not respond message from bot self', async () => {
@@ -152,14 +180,45 @@ describe('client#handleMessage', () => {
     expect(result).toBe(false);
   });
 
-  it.skip('should replace message if mention robot', async () => {
+  it('should send error if throw error', async () => {
     (client as any).robot = {
       id: 'self',
       name: 'self'
     };
+
+    const spy = jest.spyOn(console, 'log');
+
+    (client as any).apiClient.chat = {
+      postMessage: jest.fn().mockReturnValue(Promise.resolve(''))
+    };
+    rawSlackMessage.text = '<@self> please help';
+    rawSlackMessage.user = 'not_robot_user';
+    (Robot.handleMessage as any).mockImplementation(() => {
+      throw Error('you are not authed user');
+    });
+
+    (client.send as any) = jest.fn();
+    await (client as any).handleMessage(rawSlackMessage);
+    expect(client.send).toHaveBeenCalledWith(
+      rawSlackMessage.channel,
+      'can not handle message: you are not authed user',
+      [],
+      rawSlackMessage.ts
+    );
+  });
+
+  it('should replace message if mention robot', async () => {
+    (client as any).robot = {
+      id: 'self',
+      name: 'self'
+    };
+
+    rawSlackMessage.user = 'not_robot_user';
     rawSlackMessage.text = `<@self> deploy alpha project`;
     await (client as any).handleMessage(rawSlackMessage);
 
     expect(rawSlackMessage.text).toBe('deploy alpha project');
+    expect(Robot.handleMessage).toHaveBeenCalled();
+    expect(Robot.handleMessage).toHaveBeenCalledWith(rawSlackMessage);
   });
 });

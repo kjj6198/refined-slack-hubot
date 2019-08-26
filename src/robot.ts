@@ -3,11 +3,7 @@ import HubotScript, { Command } from './services/HubotScript';
 
 const scripts = HubotScript.readScripts();
 
-function preProcessMessage(
-  script: Command,
-  message: RawSlackMessage,
-  client: SlackClient
-) {
+function preProcessMessage(script: Command, message: RawSlackMessage, client: SlackClient) {
   if (
     typeof script.isAuthedUser === 'function' &&
     !script.isAuthedUser(message.user, message, client)
@@ -16,14 +12,10 @@ function preProcessMessage(
     return false;
   }
 
-  if (
-    typeof script.enableChannels === 'function' &&
-    !script.enableChannels(message, client)
-  ) {
+  if (typeof script.enableChannels === 'function' && !script.enableChannels(message, client)) {
     client.send(
       message.channel,
-      `*ERROR:* ${script.name ||
-        'this'} command can only run in certain channels.`
+      `*ERROR:* ${script.name || 'this'} command can only run in certain channels.`
     );
     return false;
   }

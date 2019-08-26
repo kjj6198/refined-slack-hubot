@@ -12,13 +12,12 @@ const memebers = [
   { name: 'thomas', id: 'WEFPJJLE5' },
   { name: 'ldange', id: 'WGK3UHEGH' },
   { name: 'maedah', id: 'WJP91TQV6' },
-  { name: 'kalan', id: 'WKU8E7CLR' }
+  { name: 'kalan', id: 'WKU8E7CLR' },
 ];
 
 const deploy: Command = {
   name: 'deploy',
-  description:
-    'deploy github projects to alpha, beta by github deployment event',
+  description: 'deploy github projects to alpha, beta by github deployment event',
   isAuthedUser: userId => userId === 'UF1964VDJ' || userId === 'WKU8E7CLR',
   command: /deploy (alpha|beta) ([^ ]+) ([^ ]+)/,
   action: async (matches, message, client) => {
@@ -36,8 +35,8 @@ const deploy: Command = {
         ref: branch,
         environment: phase,
         payload: {
-          user
-        }
+          user,
+        },
       });
 
       const component = block`
@@ -60,12 +59,9 @@ const deploy: Command = {
       `;
       client.send(message.channel, 'Deployment has established', component);
     } catch (error) {
-      client.send(
-        message.channel,
-        `can not create deployment. Error: ${error.message}`
-      );
+      client.send(message.channel, `can not create deployment. Error: ${error.message}`);
     }
-  }
+  },
 };
 
 const askForReview = {
@@ -89,12 +85,10 @@ const askForReview = {
               requestedReviewers:
                 pr.requested_reviewers &&
                 pr.requested_reviewers.map(reviewer => `@<${reviewer.login}>`),
-              url: pr.html_url
+              url: pr.html_url,
             };
           })
-          .map(
-            (pr, i) => `${i + 1}. <${pr.url}|${pr.title}> @${pr.assignee}\n`
-          );
+          .map((pr, i) => `${i + 1}. <${pr.url}|${pr.title}> @${pr.assignee}\n`);
 
         if (text.length === 0) {
           client.send(
@@ -118,7 +112,7 @@ const askForReview = {
         client.send(message.channel, err.message);
       }
     }
-  }
+  },
 };
 
 export default [deploy, askForReview];

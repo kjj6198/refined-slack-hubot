@@ -12,13 +12,13 @@ describe('HubotScript.readScript', () => {
       {
         name: 'test',
         command: 'test',
-        action: () => {}
+        action: () => {},
       },
       {
         name: 'test',
         command: 'test',
-        action: () => {}
-      }
+        action: () => {},
+      },
     ];
 
     expect(() => {

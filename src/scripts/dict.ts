@@ -4,8 +4,7 @@ import getVocabularies from './lib/dictionary';
 
 const search: Command = {
   name: 'search',
-  description:
-    'search %s: search word or sentense between english and japanese',
+  description: 'search %s: search word or sentense between english and japanese',
   isAuthedUser: () => true,
   command: /search (.+)/,
   action: async (matches, message, client) => {
@@ -18,27 +17,23 @@ const search: Command = {
         const [relative] = first.senses;
 
         const component = block`
-        <p>
-          Word: <br/>
-          <b>${first.slug} (${first.japanese
-          .map(j => j.reading)
-          .join(', ')})</b>
-        </p>
-        <hr />
-        <p><b>meaning:</b><br/></p>
-        <p>${relative.english_definitions
-          .map((d, i) => `${i + 1}. ${d}`)
-          .join('\n')}</p>
-        <context elements=${[
-          block`
-          <t>*jlpt:* ${
-            first.jlpt.length === 0
-              ? 'not defined'
-              : first.jlpt.map(j => j.replace('jlpt-', '')).join(',')
-          }</t>
-        `
-        ]} />
-      `;
+          <p>
+            Word: <br/>
+            <b>${first.slug} (${first.japanese.map(j => j.reading).join(', ')})</b>
+          </p>
+          <hr />
+          <p><b>meaning:</b><br/></p>
+          <p>${relative.english_definitions.map((d, i) => `${i + 1}. ${d}`).join('\n')}</p>
+          <context elements=${[
+            block`
+            <t>*jlpt:* ${
+              first.jlpt.length === 0
+                ? 'not defined'
+                : first.jlpt.map(j => j.replace('jlpt-', '')).join(',')
+            }</t>
+          `,
+          ]} />
+        `;
 
         client.send(message.channel, 'result:', component, message.ts);
       } else {
@@ -52,12 +47,9 @@ const search: Command = {
         );
       }
     } catch (err) {
-      client.send(
-        message.channel,
-        `can not search word ${word}. Error: ${err.message}`
-      );
+      client.send(message.channel, `can not search word ${word}. Error: ${err.message}`);
     }
-  }
+  },
 };
 
 export default [search];

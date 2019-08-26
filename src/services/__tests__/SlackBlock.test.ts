@@ -15,8 +15,8 @@ describe('SlackBlock#block``', () => {
       type: 'section',
       text: {
         type: 'plain_text',
-        text: 'hello'
-      }
+        text: 'hello',
+      },
     };
 
     expect(render).toEqual(expected);
@@ -31,8 +31,8 @@ describe('SlackBlock#block``', () => {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: 'hello'
-      }
+        text: 'hello',
+      },
     };
 
     expect(render).toEqual(expected);
@@ -54,16 +54,16 @@ describe('SlackBlock#block``', () => {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `any text *I'm markdown*`
-        }
+          text: `any text *I'm markdown*`,
+        },
       },
       {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `any text2 *I'm markdown*`
-        }
-      }
+          text: `any text2 *I'm markdown*`,
+        },
+      },
     ];
 
     expect(render).toEqual(expected);
@@ -81,10 +81,10 @@ describe('SlackBlock#block``', () => {
       title: {
         type: 'plain_text',
         text: 'test',
-        emoji: true
+        emoji: true,
       },
       image_url: url,
-      alt_text: 'test'
+      alt_text: 'test',
     };
 
     expect(render).toEqual(expected);
@@ -92,29 +92,37 @@ describe('SlackBlock#block``', () => {
 
   it('<hr/>', () => {
     expect(block`<hr/>`).toEqual({
-      type: 'divider'
+      type: 'divider',
     });
   });
 
   // context is still testing...
-  it.skip('context', () => {
+  it('<context />', () => {
     expect(block`
-      <context elements=${[
-        block`
+      <context elements=${block`
         <t>1</t>
         <t>2</t>
         <t>3</t>
         <t>4</t>
-      `
-      ]} />
+      `} />
     `).toEqual({
       type: 'context',
       elements: [
         { type: 'mrkdwn', text: '1' },
         { type: 'mrkdwn', text: '2' },
         { type: 'mrkdwn', text: '3' },
-        { type: 'mrkdwn', text: '4' }
-      ]
+        { type: 'mrkdwn', text: '4' },
+      ],
+    });
+  });
+
+  it('<context /> with single element', () => {
+    // you need to wrap with array if block`` only has one tag
+    expect(block`
+      <context elements=${[block`<t>1</t>`]}/>
+    `).toEqual({
+      type: 'context',
+      elements: [{ type: 'mrkdwn', text: '1' }],
     });
   });
 
@@ -134,7 +142,7 @@ describe('SlackBlock#block``', () => {
       `} />
     `).toEqual({
       type: 'section',
-      fields: [{ text: '1', type: 'mrkdwn' }, { text: '2', type: 'mrkdwn' }]
+      fields: [{ text: '1', type: 'mrkdwn' }, { text: '2', type: 'mrkdwn' }],
     });
   });
 
@@ -153,9 +161,9 @@ describe('SlackBlock#block``', () => {
         alt_text: 'test',
         image_url: 'http://www.img.com',
         title: { emoji: true, text: 'hello', type: 'plain_text' },
-        type: 'image'
+        type: 'image',
       },
-      { text: { text: '*hello* world', type: 'mrkdwn' }, type: 'section' }
+      { text: { text: '*hello* world', type: 'mrkdwn' }, type: 'section' },
     ]);
   });
 
@@ -168,7 +176,7 @@ describe('SlackBlock#block``', () => {
 
     expect(component).toEqual({
       text: { text: '<@myid> please go to hell', type: 'mrkdwn' },
-      type: 'section'
+      type: 'section',
     });
   });
 
@@ -181,7 +189,7 @@ describe('SlackBlock#block``', () => {
 
     expect(component).toEqual({
       text: { text: '<#general> please go to hell', type: 'mrkdwn' },
-      type: 'section'
+      type: 'section',
     });
   });
 });

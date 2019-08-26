@@ -19,11 +19,11 @@ function findMaxLength(commands: Array<string>, padding = 3) {
 }
 
 // convert
-// ci   get CI function 
+// ci   get CI function
 // deploy   deploy to {alpha, beta, release}
 //
 // to
-// ci       get CI function 
+// ci       get CI function
 // deploy   deploy to {alpha, beta, release}
 export default function alignText(commands: Array<string>) {
   const min = findMinLength(commands);

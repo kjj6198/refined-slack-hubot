@@ -24,16 +24,19 @@ export type SlackMessage = {
   user: any;
   event_ts: string;
   ts: string;
+  thread_ts?: string;
 };
 
 export type RawSlackMessage = {
   type: string;
+  subtype?: string;
   text: string;
   user: string;
   team: string;
   channel: string;
   event_ts: string;
   ts: string;
+  thread_ts?: string;
 };
 
 type Hubot = {
@@ -137,8 +140,7 @@ export type SlackChannelResult = {
   channel: SlackChannel;
 };
 
-const catchError = err =>
-  console.log(`SlackClient#send() error: ${err.message}`);
+const catchError = err => console.log(`SlackClient#send() error: ${err.message}`);
 // think about testibility
 export default class SlackClient {
   private rtm: RTMClient;
@@ -163,24 +165,20 @@ export default class SlackClient {
     this.rtm.on('message.im', this.handleMessage);
 
     this.rtm.on('error', console.error);
-    this.rtm.once('hello', () =>
-      console.log('Successfully connected from server')
-    );
+    this.rtm.once('hello', () => console.log('Successfully connected from server'));
     this.rtm.once('disconnect', () => console.log('time to say goodbye!'));
   }
 
   async getPrivateChannelInfo(channelId: string): Promise<any> {
     return this.apiClient.groups
       .info({
-        channel: channelId
+        channel: channelId,
       })
       .then(result => {
         return result.channel;
       })
       .catch(err => {
-        console.log(
-          `channel can not found, maybe I don\'t have permission. Error: ${err.message}`
-        );
+        console.log(`channel can not found, maybe I don\'t have permission. Error: ${err.message}`);
       });
   }
 
@@ -192,7 +190,7 @@ export default class SlackClient {
 
     return this.apiClient.channels
       .info({
-        channel: channelId
+        channel: channelId,
       })
       .then((result: SlackChannelResult) => {
         if (result.ok) {
@@ -204,10 +202,7 @@ export default class SlackClient {
       })
       .catch(err => {
         if (err.code === 'slack_webapi_platform_error') {
-          if (
-            !err.data.ok &&
-            err.data.error === 'method_not_supported_for_channel_type'
-          ) {
+          if (!err.data.ok && err.data.error === 'method_not_supported_for_channel_type') {
             return this.getPrivateChannelInfo(channelId);
           }
         }
@@ -224,7 +219,7 @@ export default class SlackClient {
 
     return this.apiClient.users
       .info({
-        user: userId
+        user: userId,
       })
       .then((u: any) => {
         MemoryStorage.set(`users-${userId}`, u.user);
@@ -243,14 +238,14 @@ export default class SlackClient {
       as_user: true,
       channel,
       text,
-      link_names: true
+      link_names: true,
     };
 
     if (!blocks) {
       return this.apiClient.chat
         .postMessage({
           ...baseOptions,
-          thread_ts: ts
+          thread_ts: ts,
         })
         .catch(catchError);
     }
@@ -260,7 +255,7 @@ export default class SlackClient {
         ...baseOptions,
         blocks,
         mrkdwn: true,
-        thread_ts: ts
+        thread_ts: ts,
       })
       .catch(catchError);
   }
@@ -291,10 +286,7 @@ export default class SlackClient {
     }
   }
 
-  private handleMessage = async (
-    message: RawSlackMessage
-  ): Promise<boolean> => {
-    // ignore self sent message
+  private handleMessage = async (message: RawSlackMessage): Promise<boolean> => {
     if (message.user === this.robot.id) {
       return false;
     }
@@ -328,11 +320,17 @@ export default class SlackClient {
       // const user = this.getUserInfo(message.user);
       // only respond for mention
       if (trimedMessage.indexOf(`<@${this.robot.id}>`) === 0) {
-        message.text = message.text.replace(`<@${this.robot.id}>`, '');
+        message.text = message.text.replace(`<@${this.robot.id}>`, '').trim();
         Robot.handleMessage(message);
       }
     } catch (err) {
       console.log('can not handle message: %s', err.message);
+      this.send(
+        message.channel,
+        `can not handle message: ${err.message}`,
+        [],
+        message.thread_ts || message.ts
+      );
     }
   };
 }

@@ -14,7 +14,7 @@ app.disable('x-powered-by');
 app.enable('trust proxy');
 app.use(
   bodyParser.urlencoded({
-    extended: true
+    extended: true,
   })
 );
 app.use(bodyParser.json());

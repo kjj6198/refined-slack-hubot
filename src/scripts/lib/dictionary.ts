@@ -8,9 +8,9 @@ export default function getVocabularies(keyword: string): Promise<any> {
       DICT_URL,
       {
         qs: {
-          keyword
+          keyword,
         },
-        useQuerystring: true
+        useQuerystring: true,
       },
       (err, res) => {
         if (err) {
