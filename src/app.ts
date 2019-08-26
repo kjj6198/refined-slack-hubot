@@ -3,5 +3,5 @@ import Robot from './robot';
 
 require('dotenv').config();
 
-server.listen(process.env.PORT || 3000);
+server.listen(process.env.PORT || 8080);
 Robot.run();

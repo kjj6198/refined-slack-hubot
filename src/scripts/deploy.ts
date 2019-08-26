@@ -19,7 +19,7 @@ const deploy: Command = {
   name: 'deploy',
   description:
     'deploy github projects to alpha, beta by github deployment event',
-  isAuthedUser: userId => userId === 'UF1964VDJ',
+  isAuthedUser: userId => userId === 'UF1964VDJ' || userId === 'WKU8E7CLR',
   command: /deploy (alpha|beta) ([^ ]+) ([^ ]+)/,
   action: async (matches, message, client) => {
     const [msg, phase, name, branch] = matches;
@@ -31,7 +31,7 @@ const deploy: Command = {
     const user = await client.getUserInfo(message.user);
     try {
       const deployment = await createDeployment({
-        owner: 'kjj6198',
+        owner: 'kalan',
         repo: name,
         ref: branch,
         environment: phase,
@@ -88,15 +88,12 @@ const askForReview = {
               assignee: pr.assignee && pr.assignee.login,
               requestedReviewers:
                 pr.requested_reviewers &&
-                pr.requested_reviewers.map(reviewer => reviewer.login),
+                pr.requested_reviewers.map(reviewer => `@<${reviewer.login}>`),
               url: pr.html_url
             };
           })
           .map(
-            (pr, i) =>
-              `${i + 1}. <${pr.url}|${pr.title}> @${
-                pr.assignee
-              } requested reviewers: ${pr.requestedReviewers.join(', ')}`
+            (pr, i) => `${i + 1}. <${pr.url}|${pr.title}> @${pr.assignee}\n`
           );
 
         if (text.length === 0) {

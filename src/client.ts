@@ -242,7 +242,8 @@ export default class SlackClient {
     const baseOptions = {
       as_user: true,
       channel,
-      text
+      text,
+      link_names: true
     };
 
     if (!blocks) {
