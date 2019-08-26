@@ -1,9 +1,10 @@
 {
   "name": "pero-hubot",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "cli-like Slack Hubot",
+  "main": "dist/app.js",
   "scripts": {
+    "build": "tsc",
     "start:prod": "ts-node ./src/app.ts &",
     "start": "ts-node ./src/app.ts",
     "test": "jest"
