@@ -18,7 +18,7 @@ const deploy: Command = {
     const user = await client.getUserInfo(message.user);
     try {
       const deployment = await createDeployment({
-        owner: 'kalan',
+        owner: 'kjj6198',
         repo: name,
         ref: branch,
         environment: phase,

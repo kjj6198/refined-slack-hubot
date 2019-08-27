@@ -1,75 +1,43 @@
-import { Command } from '../services/HubotScript';
-import { createRelease, removeRef } from './lib/github';
 import block from '../services/SlackBlock';
-import memebers from './lib/member';
+import { Command } from '../services/HubotScript';
+import { createTag } from './lib/github';
 
-const Success = ({ name, repo, env, link }) => block`
-  <p>Release \`${name}\` has been created</p>
-  <p><a href=${link}>${name}</a></p>
-  
+const Success = ({ tag, link, title, repo, env, userId }) => block`
+  <p><mention type="user" id="${userId}" /><b>Release \`${tag}\` has been created</b></p>
+  <p><a href=${link}>${title}</a></p>
   <context elements=${block`
-    <t>repo: ${repo}</t>
-    <t>env: ${env}</t>
-  `} />
+    <t><b>repo:</b> ${repo}</t>
+    <t><b>env:</b> ${env} </t>
+  `}/>
+`;
+
+const ErrorMessage = ({ err }) => block`
+  <p><b>ERROR:</b> ${err}</p>
 `;
 
 const release: Command = {
   name: 'release',
-  description: 'release (alpha|beta) owner repo branch version',
+  description: 'release (alpha|beta|release) owner repo branch tagname',
   command: /release (alpha|beta|release) ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+)/,
-  isAuthedUser: userId => memebers.some(member => member.id === userId),
+  isAuthedUser: (userId, message) => true,
   action: async (match, message, client) => {
-    const [msg, env, owner, repo, branch, version] = match;
-    try {
-      const release = await createRelease({
-        owner,
-        repo,
-        message: env,
-        name: version,
-        branch,
-      });
-
-      client.send(
-        message.channel,
-        `Release ${version} has been created`,
-        block`
-            <p><mention type="user" id="${message.user}" /></p>
-            <${Success} name=${version} repo=${repo} env=${env} link=${release.html_url} />
-            <context elements=${block`
-              <t>tag: ${release.tag_name}</t>
-            `} />
-          `
-      );
-    } catch (err) {
-      client.send(message.channel, `ERROR: ${err.message}`);
-    }
-  },
-};
-
-// still testing
-const remove: Command = {
-  name: 'remove',
-  description: 'remove release version',
-  command: /remove ([^ ]+) ([^ ]+) ([^ ]+)/,
-  isAuthedUser: () => true,
-  action: async (match, message, client) => {
-    const [msg, owner, repo, version] = match;
+    const [msg, env, owner, repo, branch, tagName] = match;
 
     try {
-      const result = await removeRef({
-        owner,
-        repo,
-        ref: version,
-      });
-      client.send(
-        message.channel,
-        '',
-        block`
-        <p>Successfully removed release version \`${version}\`</p>
-      `
-      );
+      const release = await createTag({ owner, repo, branch, tag: tagName, message: env });
+      const component = block`
+        <${Success}
+          tag=${release.tag_name}
+          title=${release.name}
+          link=${release.html_url}
+          repo=${repo}
+          env=${env}
+          userId=${message.user}
+        />
+      `;
+      client.send(message.channel, '', component);
     } catch (err) {
-      client.send(message.channel, `ERROR: ${err.message}`);
+      client.send(message.channel, err.message, [block`<${ErrorMessage} err="${err.message}" />`]);
     }
   },
 };

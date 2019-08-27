@@ -4,8 +4,8 @@
   "description": "cli-like Slack Hubot",
   "main": "dist/app.js",
   "scripts": {
-    "build": "tsc",
     "build:start": "npm run build && node ./dist/app",
+    "build": "rm -r ./dist && tsc",
     "start:prod": "node ./dist/app.js &",
     "start": "ts-node ./src/app.ts",
     "test": "jest"

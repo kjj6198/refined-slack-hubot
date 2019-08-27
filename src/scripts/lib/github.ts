@@ -44,20 +44,27 @@ export async function createDeployment({
     state: 'pending',
   });
 
+  await octokit.repos.createDeploymentStatus({
+    owner,
+    repo,
+    deployment_id: deployment.id,
+    state: 'in_progress',
+  });
+
   return deployment;
 }
 
-export async function createRelease({ owner, repo, branch, message, name }) {
+export async function createTag({ owner, repo, tag, message, branch }) {
   const { data: commit } = await octokit.repos.getCommit({
     owner,
     repo,
     ref: branch,
   });
 
-  const { data: tag } = await octokit.git.createTag({
+  const { data } = await octokit.git.createTag({
     owner,
     repo,
-    tag: `${name}-${message}`,
+    tag,
     message,
     object: commit.sha,
     type: 'commit',
@@ -66,17 +73,17 @@ export async function createRelease({ owner, repo, branch, message, name }) {
   const { data: ref } = await octokit.git.createRef({
     owner,
     repo,
-    ref: `refs/tags/${tag.tag}`,
-    sha: tag.sha,
+    ref: `refs/tags/${data.tag}`,
+    sha: commit.sha,
   });
 
   const { data: release } = await octokit.repos.createRelease({
     owner,
     repo,
-    tag_name: tag.tag,
-    name: tag.tag,
+    tag_name: data.tag,
+    name: `${data.tag}-${message}`,
     draft: true,
-    body: '',
+    prerelease: true,
   });
 
   return release;
