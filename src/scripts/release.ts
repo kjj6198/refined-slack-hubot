@@ -1,6 +1,7 @@
 import block from '../services/SlackBlock';
 import { Command } from '../services/HubotScript';
-import { createTag } from './lib/github';
+import { createTag, compareDiff } from './lib/github';
+import flatten from '../utils/flatten';
 
 const Success = ({ tag, link, title, repo, env, userId }) => block`
   <p><mention type="user" id="${userId}" /><b>Release \`${tag}\` has been created</b></p>
@@ -25,6 +26,13 @@ const release: Command = {
 
     try {
       const release = await createTag({ owner, repo, branch, tag: tagName, message: env });
+      const diffs = await compareDiff({
+        owner,
+        repo,
+        base: 'master',
+        head: release.tag_name,
+      });
+
       const component = block`
         <${Success}
           tag=${release.tag_name}
@@ -34,8 +42,24 @@ const release: Command = {
           env=${env}
           userId=${message.user}
         />
+        <hr/>
+        <p>
+          <a href="${diffs.html_url}">\`master\`...\`${release.tag_name}\`</a><br/>
+        </p>
+        <p><b>Total Commits: \`${diffs.total_commits}\`</b><br/></p>
+        <p>
+          ${diffs.commits
+            .map(
+              commit =>
+                `\`${commit.sha.slice(0, 7)}\` ${commit.commit.message} - ${
+                  commit.commit.committer.name
+                }`
+            )
+            .join('\n')}
+        </p>
       `;
-      client.send(message.channel, '', component);
+      // console.log(component);
+      client.send(message.channel, '', flatten(component));
     } catch (err) {
       client.send(message.channel, err.message, [block`<${ErrorMessage} err="${err.message}" />`]);
     }

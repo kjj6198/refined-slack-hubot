@@ -89,6 +89,17 @@ export async function createTag({ owner, repo, tag, message, branch }) {
   return release;
 }
 
+export async function compareDiff({ owner, repo, base, head }) {
+  const { data: diffs } = await octokit.repos.compareCommits({
+    owner,
+    repo,
+    base,
+    head,
+  });
+
+  return diffs;
+}
+
 export async function removeRef({ owner, repo, ref }) {
   const { data: result } = await octokit.git.deleteRef({
     owner,
