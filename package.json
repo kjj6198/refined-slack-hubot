@@ -5,6 +5,7 @@
   "main": "dist/app.js",
   "scripts": {
     "build": "tsc",
+    "build:start": "npm run build && node ./dist/app",
     "start:prod": "node ./dist/app.js &",
     "start": "ts-node ./src/app.ts",
     "test": "jest"

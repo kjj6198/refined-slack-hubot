@@ -1,24 +1,12 @@
 import block from '../services/SlackBlock';
 import { getOpenedPullRequests, createDeployment } from './lib/github';
 import { Command } from '../services/HubotScript';
-
-const memebers = [
-  { name: 'aidi', id: 'W958034MB' },
-  { name: 'mrt51', id: 'W94ES5UPJ' },
-  { name: 'nakaly', id: 'W94EREC1E' },
-  { name: 'veronica-xue', id: 'W951KE5RR' },
-  { name: 'jimmyh', id: 'WB75VSFGR' },
-  { name: 'masami-yonehara', id: 'W9665QEAK' },
-  { name: 'thomas', id: 'WEFPJJLE5' },
-  { name: 'ldange', id: 'WGK3UHEGH' },
-  { name: 'maedah', id: 'WJP91TQV6' },
-  { name: 'kalan', id: 'WKU8E7CLR' },
-];
+import { isMember } from './lib/member';
 
 const deploy: Command = {
   name: 'deploy',
   description: 'deploy github projects to alpha, beta by github deployment event',
-  isAuthedUser: userId => userId === 'UF1964VDJ' || userId === 'WKU8E7CLR',
+  isAuthedUser: isMember,
   command: /deploy (alpha|beta) ([^ ]+) ([^ ]+)/,
   action: async (matches, message, client) => {
     const [msg, phase, name, branch] = matches;
@@ -64,9 +52,10 @@ const deploy: Command = {
   },
 };
 
-const askForReview = {
+const askForReview: Command = {
   name: 'review',
-  description: 'ask everyone review open pull requests',
+  description: 'ask everyone review open pull requests labeled with `waiting-for-review`',
+  isAuthedUser: isMember,
   //            Organization Project
   command: /review ([^ ]+) ([^ ]+)/,
   action: async (matches, message, client) => {
@@ -77,7 +66,9 @@ const askForReview = {
         const prs = await getOpenedPullRequests(org, name);
 
         const text = prs
-          .filter(pr => pr.labels.some(l => l.name === 'waiting-for-review'))
+          .filter(pr =>
+            pr.labels.some(l => l.name === 'waiting-for-review' || l.name === 'Waiting for review')
+          )
           .map(pr => {
             return {
               title: pr.title,
@@ -88,7 +79,7 @@ const askForReview = {
               url: pr.html_url,
             };
           })
-          .map((pr, i) => `${i + 1}. <${pr.url}|${pr.title}> @${pr.assignee}\n`);
+          .map((pr, i) => `${i + 1}. <${pr.url}|${pr.title}>\n`);
 
         if (text.length === 0) {
           client.send(
