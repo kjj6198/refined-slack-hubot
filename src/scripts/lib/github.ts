@@ -19,6 +19,17 @@ export async function getOpenedPullRequests(owner, repo) {
   return pullRequests;
 }
 
+export async function updateDeploymentState({ owner, repo, deployment_id, state }) {
+  const { data: deployment } = await octokit.repos.createDeploymentStatus({
+    owner,
+    repo,
+    deployment_id,
+    state,
+  });
+
+  return deployment;
+}
+
 // it'll trigger deployment event
 export async function createDeployment({
   owner,
@@ -43,13 +54,6 @@ export async function createDeployment({
     repo,
     deployment_id: deployment.id,
     state: 'pending',
-  });
-
-  await octokit.repos.createDeploymentStatus({
-    owner,
-    repo,
-    deployment_id: deployment.id,
-    state: 'in_progress',
   });
 
   return deployment;
