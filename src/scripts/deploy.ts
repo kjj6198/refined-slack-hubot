@@ -1,15 +1,16 @@
 import block from '../services/SlackBlock';
 import { getOpenedPullRequests, createDeployment } from './lib/github';
 import { Command } from '../services/HubotScript';
-import { isMember } from './lib/member';
+import { isMember, channelIsValid } from './lib/member';
 
 const deploy: Command = {
   name: 'deploy',
   description: 'deploy github projects to alpha, beta by github deployment event',
   isAuthedUser: isMember,
-  command: /deploy (alpha|beta) ([^ ]+) ([^ ]+)/,
+  enableChannels: channelIsValid,
+  command: /deploy (alpha|beta) ([^ ]+) ([^ ]+) ([^ ]+)/,
   action: async (matches, message, client) => {
-    const [msg, phase, name, branch] = matches;
+    const [msg, phase, owner, name, branch] = matches;
     client.send(
       message.channel,
       `start deploying \`${name}\` to \`${phase}\` from \`${branch}\`...`
@@ -18,7 +19,7 @@ const deploy: Command = {
     const user = await client.getUserInfo(message.user);
     try {
       const deployment = await createDeployment({
-        owner: 'kjj6198',
+        owner,
         repo: name,
         ref: branch,
         environment: phase,
@@ -47,7 +48,12 @@ const deploy: Command = {
       `;
       client.send(message.channel, 'Deployment has established', component);
     } catch (error) {
-      client.send(message.channel, `can not create deployment. Error: ${error.message}`);
+      const component = block`
+        <p><b>ERROR:</b> can not create deployment</p>
+        <p><i>${error.message}</i></p>
+      `;
+
+      client.send(message.channel, `can not create deployment. Error: ${error.message}`, component);
     }
   },
 };

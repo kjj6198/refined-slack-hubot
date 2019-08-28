@@ -1,7 +1,7 @@
 import block from '../services/SlackBlock';
 import { Command } from '../services/HubotScript';
-import { createRelease, compareDiff } from './lib/github';
-import flatten from '../utils/flatten';
+import { createRelease, getLatestRelease } from './lib/github';
+import { isMember, channelIsValid } from './lib/member';
 
 const Success = ({ tag, link, title, repo, env, userId }) => block`
   <p><mention type="user" id="${userId}" /><b>Release \`${tag}\` has been created</b></p>
@@ -37,7 +37,8 @@ const release: Command = {
   name: 'release',
   description: 'release (alpha|beta|release) owner repo branch tagname',
   command: /release (alpha|beta|release) ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+)/,
-  isAuthedUser: (userId, message) => true,
+  isAuthedUser: isMember,
+  enableChannels: channelIsValid,
   action: async (match, message, client) => {
     const [msg, phase, owner, repo, branch, tagName] = match;
 
@@ -64,4 +65,33 @@ const release: Command = {
   },
 };
 
-export default [release];
+const latestRelease: Command = {
+  name: 'latest',
+  description: 'latest owner repo',
+  enableChannels: channelIsValid,
+  command: /latest\s+([^ ]+)\s+([^ ]+)/,
+  action: async (matches, message, client) => {
+    const [msg, owner, repo] = matches;
+
+    try {
+      const release = await getLatestRelease({ owner, repo });
+      const component = block`
+      <p>
+        <a href="${release.html_url}">${release.name}</a>
+      </p>
+      <hr/>
+      <p>${release.body || 'EMPTY'}</p>
+      <context elements=${block`
+        <t>Tag: ${release.tag_name}</t>
+        <t>Created: ${release.created_at}</t>
+      `} />
+      `;
+
+      client.send(message.channel, '', component);
+    } catch (err) {
+      client.send(message.channel, `ERROR: ${err.message}`);
+    }
+  },
+};
+
+export default [release, latestRelease];

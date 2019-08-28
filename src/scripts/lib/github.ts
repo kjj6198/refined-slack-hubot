@@ -55,6 +55,11 @@ export async function createDeployment({
   return deployment;
 }
 
+export const getLatestRelease = async ({ owner, repo }) => {
+  const { data: release } = await octokit.repos.getLatestRelease({ owner, repo });
+  return release;
+};
+
 export async function createRelease({ owner, repo, tag, phase, branch }) {
   // check if version valid first
   // v1.0.0 -> valid
