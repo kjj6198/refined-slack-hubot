@@ -11,3 +11,4 @@ steps:
       GITHUB_ACCESS_TOKEN: test
     commands:
       - npm install --ignore-script --production
+      - npm test

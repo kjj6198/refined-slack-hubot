@@ -8,7 +8,8 @@
     "build": "rm -r ./dist && tsc",
     "start:prod": "node ./dist/app.js &",
     "start": "ts-node ./src/app.ts",
-    "test": "jest"
+    "test": "jest",
+    "test:coverage": "npm run test -- --coverage"
   },
   "keywords": [],
   "author": "",
