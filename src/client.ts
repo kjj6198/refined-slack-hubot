@@ -253,7 +253,7 @@ export default class SlackClient {
     return this.apiClient.chat
       .postMessage({
         ...baseOptions,
-        blocks,
+        blocks: flatten(blocks).filter(Boolean),
         mrkdwn: true,
         thread_ts: ts,
       })

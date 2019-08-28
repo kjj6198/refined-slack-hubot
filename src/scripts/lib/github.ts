@@ -1,4 +1,5 @@
 import Octokit from '@octokit/rest';
+import semver from 'semver';
 require('dotenv').config();
 
 const octokit = new Octokit({
@@ -54,7 +55,30 @@ export async function createDeployment({
   return deployment;
 }
 
-export async function createTag({ owner, repo, tag, message, branch }) {
+export async function createRelease({ owner, repo, tag, phase, branch }) {
+  // check if version valid first
+  // v1.0.0 -> valid
+  // vv1.0.0 -> invalid
+  // 1.0.0 -> valid
+  const newVer = semver.valid(`${tag}-${phase}`); // return normalized version
+  if (!newVer) {
+    throw Error('tag should must be valid semver');
+  }
+
+  const { data: latestRelease } = await octokit.repos.getLatestRelease({
+    owner,
+    repo,
+  });
+
+  const prevVer = semver.clean(latestRelease.tag_name);
+
+  // previous version shouldn't be greater than current version
+  if (semver.gt(prevVer, newVer)) {
+    throw Error("Current version shouldn't be less than previous version");
+  }
+
+  const newVersion = 'v' + newVer;
+
   const { data: commit } = await octokit.repos.getCommit({
     owner,
     repo,
@@ -64,8 +88,8 @@ export async function createTag({ owner, repo, tag, message, branch }) {
   const { data } = await octokit.git.createTag({
     owner,
     repo,
-    tag,
-    message,
+    tag: newVersion,
+    message: phase,
     object: commit.sha,
     type: 'commit',
   });
@@ -81,12 +105,22 @@ export async function createTag({ owner, repo, tag, message, branch }) {
     owner,
     repo,
     tag_name: data.tag,
-    name: `${data.tag}-${message}`,
-    draft: true,
-    prerelease: true,
+    name: newVersion,
+    draft: false,
+    prerelease: false,
   });
 
-  return release;
+  const diffs = await compareDiff({
+    owner,
+    repo,
+    base: release.tag_name,
+    head: latestRelease.tag_name,
+  });
+
+  return {
+    release,
+    diffs,
+  };
 }
 
 export async function compareDiff({ owner, repo, base, head }) {

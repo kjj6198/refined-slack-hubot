@@ -1,6 +1,6 @@
 import block from '../services/SlackBlock';
 import { Command } from '../services/HubotScript';
-import { createTag, compareDiff } from './lib/github';
+import { createRelease, compareDiff } from './lib/github';
 import flatten from '../utils/flatten';
 
 const Success = ({ tag, link, title, repo, env, userId }) => block`
@@ -16,22 +16,33 @@ const ErrorMessage = ({ err }) => block`
   <p><b>ERROR:</b> ${err}</p>
 `;
 
+const Diff = ({ diffs }) => {
+  if (diffs.commits.length === 0) {
+    return null;
+  }
+
+  return block`
+  <p>
+    ${diffs.commits
+      .map(
+        commit =>
+          `\`${commit.sha.slice(0, 7)}\` ${commit.commit.message} - ${commit.commit.committer.name}`
+      )
+      .join('\n')}
+  </p>
+  `;
+};
+
 const release: Command = {
   name: 'release',
   description: 'release (alpha|beta|release) owner repo branch tagname',
   command: /release (alpha|beta|release) ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+)/,
   isAuthedUser: (userId, message) => true,
   action: async (match, message, client) => {
-    const [msg, env, owner, repo, branch, tagName] = match;
+    const [msg, phase, owner, repo, branch, tagName] = match;
 
     try {
-      const release = await createTag({ owner, repo, branch, tag: tagName, message: env });
-      const diffs = await compareDiff({
-        owner,
-        repo,
-        base: 'master',
-        head: release.tag_name,
-      });
+      const { release, diffs } = await createRelease({ owner, repo, branch, tag: tagName, phase });
 
       const component = block`
         <${Success}
@@ -39,27 +50,14 @@ const release: Command = {
           title=${release.name}
           link=${release.html_url}
           repo=${repo}
-          env=${env}
+          env=${phase}
           userId=${message.user}
         />
         <hr/>
-        <p>
-          <a href="${diffs.html_url}">\`master\`...\`${release.tag_name}\`</a><br/>
-        </p>
-        <p><b>Total Commits: \`${diffs.total_commits}\`</b><br/></p>
-        <p>
-          ${diffs.commits
-            .map(
-              commit =>
-                `\`${commit.sha.slice(0, 7)}\` ${commit.commit.message} - ${
-                  commit.commit.committer.name
-                }`
-            )
-            .join('\n')}
-        </p>
+        <${Diff} diffs=${diffs} />
       `;
-      // console.log(component);
-      client.send(message.channel, '', flatten(component));
+
+      client.send(message.channel, '', component);
     } catch (err) {
       client.send(message.channel, err.message, [block`<${ErrorMessage} err="${err.message}" />`]);
     }
