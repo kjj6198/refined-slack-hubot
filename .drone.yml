@@ -1,0 +1,13 @@
+---
+kind: pipeline
+name: slack-hubot-refined
+
+steps:
+  - name: test
+    image: node:10.16.0
+    environment:
+      NODE_ENV: production
+      HUBOT_SLACK_TOKEN: test
+      GITHUB_ACCESS_TOKEN: test
+    commands:
+      - npm install --ignore-script --production
